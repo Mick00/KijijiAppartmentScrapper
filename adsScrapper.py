@@ -1,11 +1,9 @@
 import pandas as pd
 from bs4 import BeautifulSoup
-import requests
 import re
 from time import sleep
 from random import randint
-
-links = pd.read_csv("links.csv", index_col=0)
+from listingScrapper import fetch_page
 
 
 def classInJs(name):
@@ -89,12 +87,75 @@ def extract_services(soup):
                 if len(service) > 0:
                     service = service.split(":")
                     services[service[1].strip()] = service[0] == "Oui" or service[0] == "Yes"
+                break
+            break
+        break
     return services
 
 
+def extract_parking_spots(soup):
+    parking_spots = 0
+    for element in soup.find_all("dt", string=["Stationnement inclus"]):
+        for sibling in element.next_siblings:
+            parking_spots = sibling.text.strip()
+            break
+        break
+    return parking_spots
+
+
+def extract_utilities(soup):
+    utilities = []
+    for element in soup.find_all("h4", string=["Électroménagers"]):
+        for service_list in element.next_siblings:
+            for item in service_list.find_all(class_=[classInJs("groupItem")]):
+                utilities.append(item.text.strip())
+    return ", ".join(utilities)
+
+
+def extract_furnished(soup):
+    furnished = False
+    for element in soup.find_all("dt", string=["Meublé"]):
+        for sibling in element.next_siblings:
+            furnished = sibling.text.strip()
+            furnished = furnished == "Oui" or furnished == "Yes"
+            break
+        break
+    return furnished
+
+
+def extract_size(soup):
+    size = ""
+    for element in soup.find_all("dt", string=["Taille (pieds carrés)"]):
+        for sibling in element.next_siblings:
+            size = sibling.text.strip()
+            break
+        break
+    return size
+
+
+def extract_air_conditioner(soup):
+    air_conditioned = False
+    for element in soup.find_all("dt", string=["Air conditionné"]):
+        for sibling in element.next_siblings:
+            air_conditioned = sibling.text.strip()
+            air_conditioned = air_conditioned == "Oui" or air_conditioned == "Yes"
+            break
+        break
+    return air_conditioned
+
+
+def extract_allow_pets(soup):
+    allow_pets = ""
+    for element in soup.find_all("dt", string=["Animaux acceptés"]):
+        for sibling in element.next_siblings:
+            allow_pets = sibling.text.strip()
+            break
+        break
+    return allow_pets
+
 def fetch_ad(link):
     ad = {}
-    page = requests.get(link)
+    page = fetch_page(link, 3)
     soup = BeautifulSoup(page.text, 'html.parser')
     ad["link"] = link
     ad["price"] = extract_price(soup)
@@ -104,6 +165,12 @@ def fetch_ad(link):
     ad["rooms"] = extract_rooms(soup)
     ad["bathroom"] = extract_bathroom(soup)
     ad["services"] = extract_services(soup)
+    ad["parking_spots"] = extract_parking_spots(soup)
+    ad["utilities"] = extract_utilities(soup)
+    ad["furnished"] = extract_furnished(soup)
+    ad["size"] = extract_size(soup)
+    ad["air_conditioned"] = extract_air_conditioner(soup)
+    ad["allow_pets"] = extract_allow_pets(soup)
     return flatten_dict(ad)
 
 
@@ -115,7 +182,10 @@ def fetch_ads(df):
         sleep(randint(2, 5))
     return pd.DataFrame(ads)
 
-print("https://www.kijiji.ca" + links.loc[0].link)
 
-ads = fetch_ads(links[:100])
-ads.to_csv("ads.csv")
+
+#print(fetch_ad("https://www.kijiji.ca/v-appartement-condo/ville-de-montreal/4-1-2-style-condo-tout-inclus-semi-meuble/1553388246"))
+#print(fetch_ad("https://www.kijiji.ca/v-appartement-condo/ville-de-montreal/condo-4-1-2-meuble-vieux-port-centre-ville-1-mois-offert/1516967309?undefined"))
+#ads = fetch_ads(links[:1])
+#print(ads)
+#ads.to_csv("ads.csv")
