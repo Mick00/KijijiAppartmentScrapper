@@ -5,4 +5,4 @@ import pandas as pd
 #links.to_csv("links.csv")
 links = pd.read_csv("links.csv")
 ads = fetch_ads(links)
-ads.to_csv("ads.csv")
+ads.to_csv("ads_kijiji.csv")

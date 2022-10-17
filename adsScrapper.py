@@ -175,10 +175,11 @@ def fetch_ad(link):
 
 
 def fetch_ads(df):
+    links = df["link"].unique()
     ads = []
-    for i, row in df.iterrows():
-        ads.append(fetch_ad("https://www.kijiji.ca" + row["link"]))
-        print(f'{i+1}/{len(df.index)}')
+    for i, link in enumerate(links):
+        ads.append(fetch_ad("https://www.kijiji.ca" + link))
+        print(f'{i+1}/{len(links)}')
         sleep(randint(2, 5))
     return pd.DataFrame(ads)
 
@@ -188,4 +189,4 @@ def fetch_ads(df):
 #print(fetch_ad("https://www.kijiji.ca/v-appartement-condo/ville-de-montreal/condo-4-1-2-meuble-vieux-port-centre-ville-1-mois-offert/1516967309?undefined"))
 #ads = fetch_ads(links[:1])
 #print(ads)
-#ads.to_csv("ads.csv")
+#ads.to_csv("ads_kijiji.csv")
